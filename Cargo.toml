@@ -10,7 +10,7 @@ repository = "https://github.com/SIT-Yiban/zf-tools-rs"
 description = "基于 Rust 编写的新版正方教务系统 SDK"
 
 [dependencies]
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", features = ["json", "cookies"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "1"
