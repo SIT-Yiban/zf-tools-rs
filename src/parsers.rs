@@ -1,6 +1,14 @@
 mod classes;
+mod score;
+mod select_course;
+mod timetable;
+mod user_profile;
 
-pub use classes::{Class, Major};
+pub use classes::{parse_class_list_page, parse_major_list_page, Class, Major};
+pub use score::{calculate_gpa, parse_score_list_page, Score};
+pub use select_course::{parse_available_course_page, SelectCourse};
+pub use timetable::{parse_timetable_page, Course};
+pub use user_profile::{parse_profile_page, Profile};
 
 #[derive(Clone)]
 pub enum SchoolYear {
@@ -32,7 +40,7 @@ pub enum Semester {
 }
 
 impl Semester {
-    fn to_raw(&self) -> &str {
+    pub(crate) fn to_raw(&self) -> &str {
         return match self {
             Semester::All => "",
             Semester::FirstTerm => "3",

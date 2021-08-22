@@ -1,15 +1,14 @@
+use crate::client::OwnClient;
+use crate::global_config::*;
 use base64::{decode, encode};
 use rand::rngs::OsRng;
 use regex::Regex;
-use reqwest::header::{USER_AGENT, COOKIE};
-use reqwest::{Client, cookie::Cookie, ClientBuilder, StatusCode, Response};
+use reqwest::header::{COOKIE, USER_AGENT};
+use reqwest::{cookie::Cookie, Client, ClientBuilder, Response, StatusCode};
 use rsa::{BigUint, PaddingScheme, PublicKey, RsaPublicKey};
-
-use crate::global_config::*;
 use std::collections::HashMap;
 
 pub type AccountCookies = HashMap<String, HashMap<String, String>>;
-
 
 lazy_static::lazy_static! {
     static ref CSRF_TOKEN_REGEX: Regex = Regex::new(
@@ -56,7 +55,10 @@ impl SessionBuilder {
             passwd: self.passwd.unwrap_or_else(|| {
                 panic!("Passwd is required in SessionBuilder, please call passwd method.")
             }),
-            client: ClientBuilder::new().redirect(reqwest::redirect::Policy::none()).build().unwrap(),
+            client: ClientBuilder::new()
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .unwrap(),
             login_flag: false,
             cookies: HashMap::default(),
         }
@@ -84,19 +86,23 @@ pub fn domain(url: &str) -> Option<String> {
 }
 
 impl Session {
-
-    async fn post_with_auto_redirect(&mut self, start_page: &str, params: [(&str, &str);4]) -> anyhow::Result<Response> {
+    async fn post_with_auto_redirect(
+        &mut self,
+        start_page: &str,
+        params: [(&str, &str); 4],
+    ) -> anyhow::Result<Response> {
         let mut remain_redirect = 10;
         let mut next_hop = start_page.to_string();
 
-        let mut response = self.client
+        let mut response = self
+            .client
             .post(&next_hop)
             .header(USER_AGENT, USERAGENT)
             .header(COOKIE, self.get_cookie_string("jwxt.sit.edu.cn"))
             .form(&params)
             .send()
             .await?;
-        self.sync_cookies("jwxt.sit.edu.cn",response.cookies());
+        self.sync_cookies("jwxt.sit.edu.cn", response.cookies());
 
         while remain_redirect > 0 && response.status() == StatusCode::FOUND {
             let redirect_url = response.headers().get("location");
@@ -109,12 +115,14 @@ impl Session {
             } else {
                 t
             };
-            response = self.client.get(&next_hop)
+            response = self
+                .client
+                .get(&next_hop)
                 .header(USER_AGENT, USERAGENT)
                 .header(COOKIE, self.get_cookie_string("jwxt.sit.edu.cn"))
                 .send()
                 .await?;
-            self.sync_cookies("jwxt.sit.edu.cn",response.cookies());
+            self.sync_cookies("jwxt.sit.edu.cn", response.cookies());
             remain_redirect -= 1;
         }
         Ok(response)
@@ -149,8 +157,8 @@ impl Session {
     }
 
     pub fn sync_cookies<'a, T>(&mut self, domain: &str, cookies: T)
-        where
-            T: Iterator<Item = Cookie<'a>>,
+    where
+        T: Iterator<Item = Cookie<'a>>,
     {
         cookies.for_each(|x| {
             let domain = x.domain().unwrap_or(domain);
@@ -164,6 +172,7 @@ impl Session {
         });
     }
 
+    // Passwd ras function
     pub async fn get_ras_public_key(&mut self) -> anyhow::Result<(Vec<u8>, Vec<u8>)> {
         #[derive(Debug, serde::Deserialize)]
         struct RsaPublicKey {
@@ -179,7 +188,7 @@ impl Session {
             .send()
             .await?;
 
-        self.sync_cookies("jwxt.sit.edu.cn",resp.cookies());
+        self.sync_cookies("jwxt.sit.edu.cn", resp.cookies());
         let public_key = resp.json::<RsaPublicKey>().await?;
         let modulus = decode(public_key.modulus)?;
         let exponent = decode(public_key.exponent)?;
@@ -208,7 +217,8 @@ impl Session {
         err_node
     }
 
-    pub async fn login(&mut self) -> anyhow::Result<(String)> {
+    // Login function
+    pub async fn login(&mut self) -> anyhow::Result<OwnClient> {
         // Get login page for the first cookie
         self.cookies.clear();
 
@@ -218,14 +228,13 @@ impl Session {
             .header(USER_AGENT, USERAGENT)
             .send()
             .await?;
-        self.sync_cookies("jwxt.sit.edu.cn",login_page.cookies());
+        self.sync_cookies("jwxt.sit.edu.cn", login_page.cookies());
 
         let text = login_page.text().await?;
         let token = self.get_csrf_token(&text)?;
 
         if let Ok((public_key, exponent)) = self.get_ras_public_key().await {
-            let encrypted_passwd =
-                encrypt_in_rsa(self.passwd.as_bytes(), public_key, exponent)?;
+            let encrypted_passwd = encrypt_in_rsa(self.passwd.as_bytes(), public_key, exponent)?;
 
             let params = [
                 ("csrftoken", token.as_str()),
@@ -239,16 +248,16 @@ impl Session {
             return if final_response.url().to_string().starts_with(url::LOGIN) {
                 let text = &final_response.text().await?;
 
-
                 let error = Self::parse_err_message(&text);
                 Err(anyhow::anyhow!("Session error : {:?}.", error))
             } else {
                 self.login_flag = true;
-                Ok("success".to_string())
+                Ok(OwnClient {
+                    user: self.user.clone(),
+                    session: self.clone(),
+                })
             };
         }
         Err(anyhow::anyhow!("Can't get public key"))
     }
 }
-
-

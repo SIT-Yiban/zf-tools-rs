@@ -1,17 +1,6 @@
-use crate::parsers::ParserError;
 use crate::Result;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-
-
-static ELEMENTS_CLASS: [(&str, &str); 5] = [
-    ("grade", "njmc"),      // 年级
-    ("college", "jgmc"),    // 学院
-    ("major_name", "zymc"), // 专业名称
-    ("major_id", "zyh_id"), // 专业代码
-    ("class_id", "bh"),     // 班级
-];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Major {
@@ -37,12 +26,24 @@ pub struct Major {
     direction: String,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Class {
-    grade: String,
+    #[serde(skip_deserializing)]
+    grade: i32,
+    #[serde(rename(deserialize = "njmc"))]
+    /// 年级
+    _grade: String,
+    #[serde(rename(deserialize = "jgmc"))]
+    /// 学院
     college: String,
+    #[serde(rename(deserialize = "zymc"))]
+    /// 专业名称
     major_name: String,
+    #[serde(rename(deserialize = "zyh_id"))]
+    /// 专业代码
     major_id: String,
+    #[serde(rename(deserialize = "bh"))]
+    /// 班级
     class_id: String,
 }
 
@@ -63,10 +64,26 @@ pub fn parse_major_list_page(page: &str) -> Result<Vec<Major>> {
     Ok(vec![])
 }
 
+pub fn parse_class_list_page(page: &str) -> Result<Vec<Class>> {
+    let json_page: Value = serde_json::from_str(page)?;
+
+    if let Some(major_list) = json_page.as_array() {
+        let result = major_list
+            .iter()
+            .map(|v| {
+                let mut x = serde_json::from_value::<Class>(v.clone()).unwrap();
+                x.grade = x._grade.parse().unwrap();
+                x
+            })
+            .collect();
+        return Ok(result);
+    }
+    Ok(vec![])
+}
+
 #[test]
 fn test_parse_major_list_page() {
-    let page =
-    r#"
+    let page = r#"
 [{
 	"jgpxzd": "1",
 	"listnav": "false",
@@ -147,4 +164,100 @@ fn test_parse_major_list_page() {
 
     let parsed_major_list = parse_major_list_page(page);
     println!("{:#?}", parsed_major_list);
+}
+
+#[test]
+fn test_parse_class_list_page() {
+    let page = r#"
+[
+    {
+        "bh":"08108131",
+        "bh_id":"08108131",
+        "bj":"化妆品工艺1班",
+        "jg_id":"08",
+        "jgmc":"香料香精化妆品学部（香料香精技术与工程学院）",
+        "jgpxzd":"1",
+        "listnav":"false",
+        "localeKey":"zh_CN",
+        "njdm_id":"2008",
+        "njmc":"2008",
+        "pageable":true,
+        "queryModel":{
+            "currentPage":1,
+            "currentResult":0,
+            "entityOrField":false,
+            "limit":15,
+            "offset":0,
+            "pageNo":0,
+            "pageSize":15,
+            "showCount":10,
+            "sorts":[
+
+            ],
+            "totalCount":0,
+            "totalPage":0,
+            "totalResult":0
+        },
+        "rangeable":true,
+        "totalResult":"0",
+        "userModel":{
+            "monitor":false,
+            "roleCount":0,
+            "roleKeys":"",
+            "roleValues":"",
+            "status":0,
+            "usable":false
+        },
+        "xqh_id":"02",
+        "zyh":"B0801",
+        "zyh_id":"B0801",
+        "zymc":"轻化工程"
+    },
+    {
+        "bh":"99B06030101",
+        "bh_id":"99B06030101",
+        "bj":"毕业重修（环境）",
+        "jg_id":"07",
+        "jgmc":"化学与环境工程学院",
+        "jgpxzd":"1",
+        "listnav":"false",
+        "localeKey":"zh_CN",
+        "njdm_id":"1999",
+        "njmc":"1999",
+        "pageable":true,
+        "queryModel":{
+            "currentPage":1,
+            "currentResult":0,
+            "entityOrField":false,
+            "limit":15,
+            "offset":0,
+            "pageNo":0,
+            "pageSize":15,
+            "showCount":10,
+            "sorts":[
+
+            ],
+            "totalCount":0,
+            "totalPage":0,
+            "totalResult":0
+        },
+        "rangeable":true,
+        "totalResult":"0",
+        "userModel":{
+            "monitor":false,
+            "roleCount":0,
+            "roleKeys":"",
+            "roleValues":"",
+            "status":0,
+            "usable":false
+        },
+        "xqh_id":"01",
+        "zyh":"B0701",
+        "zyh_id":"B0701",
+        "zymc":"化学工程与工艺"
+    }
+]"#;
+
+    let parsed_class_list = parse_class_list_page(page);
+    println!("{:#?}", parsed_class_list);
 }
