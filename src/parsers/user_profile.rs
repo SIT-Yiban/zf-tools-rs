@@ -1,3 +1,4 @@
+use crate::parsers::ParserError;
 use crate::Result;
 use serde::{Deserialize, Serialize};
 
@@ -43,34 +44,32 @@ static ELEMENTS: [(&str, &str); 11] = [
 
 pub fn parse_profile_page(text: &str) -> Result<Profile> {
     use scraper::{Html, Selector};
+
     let pages = Html::parse_document(text);
-    let mut element = Vec::new();
-    for (field, selector) in ELEMENTS {
+    let mut values = Vec::new();
+
+    for (_, selector) in ELEMENTS {
         let selectors = Selector::parse(selector).unwrap();
         let value = pages
             .select(&selectors)
             .next()
             .map(|x| x.inner_html())
-            .unwrap_or_default();
-        element.push(value);
+            .ok_or_else(|| ParserError::MissingField)?;
+        values.push(value);
     }
-    if element.len() == 11 {
-        let result = Profile {
-            student_no: String::from(element.get(0).unwrap_or(&String::from(""))),
-            name: String::from(element.get(1).unwrap_or(&"".to_string())),
-            name_eng: String::from(element.get(2).unwrap_or(&"".to_string())),
-            sex: String::from(element.get(3).unwrap_or(&"".to_string())),
-            credential_type: String::from(element.get(4).unwrap_or(&"".to_string())),
-            credential_id: String::from(element.get(5).unwrap_or(&"".to_string())),
-            birth_date: String::from(element.get(6).unwrap_or(&"".to_string())),
-            ethnicity: String::from(element.get(7).unwrap_or(&"".to_string())),
-            hometown: String::from(element.get(8).unwrap_or(&"".to_string())),
-            enrollment_date: String::from(element.get(9).unwrap_or(&"".to_string())),
-            types: String::from(element.get(10).unwrap_or(&"".to_string())),
-        };
-        return Ok(result);
-    }
-    Err(anyhow::anyhow!(
-        "Profile element error!!, see user_profile.rs"
-    ))
+    // It can be true that element.len() == ELEMENTS.len().
+    let profile = Profile {
+        student_no: Clone::clone(&values[0]),
+        name: Clone::clone(&values[1]),
+        name_eng: Clone::clone(&values[2]),
+        sex: Clone::clone(&values[3]),
+        credential_type: Clone::clone(&values[4]),
+        credential_id: Clone::clone(&values[5]),
+        birth_date: Clone::clone(&values[6]),
+        ethnicity: Clone::clone(&values[7]),
+        hometown: Clone::clone(&values[8]),
+        enrollment_date: Clone::clone(&values[9]),
+        types: Clone::clone(&values[10]),
+    };
+    Ok(profile)
 }

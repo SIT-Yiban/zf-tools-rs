@@ -102,24 +102,20 @@ pub fn expand_time_index(time_string: &str) -> Vec<String> {
     indices
 }
 
+fn split_string(s: String) -> Vec<String> {
+    let result: Vec<String> = s.split(",").map(ToString::to_string).collect();
+    result
+}
+
 pub fn parse_timetable_page(page: &str) -> Result<Vec<Course>> {
     let json_page: Value = serde_json::from_str(page)?;
     let course_list = json_page["kbList"].clone();
     if let Some(course) = course_list.as_array() {
         let mut result = Vec::new();
         for each_course in course {
-            let teachers: Vec<String> = each_course["xm"]
-                .to_string()
-                .split(",")
-                .into_iter()
-                .map(|x| x.to_string())
-                .collect();
-            let class: Vec<String> = each_course["jxbzc"]
-                .to_string()
-                .split(",")
-                .into_iter()
-                .map(|x| x.to_string())
-                .collect();
+            let teachers = split_string(each_course["xm"].to_string());
+            let class = split_string(each_course["jxbzc"].to_string());
+
             let credits = f32::from_str(&*each_course["xf"].to_string()).unwrap();
             let hour = f32::from_str(&*each_course["zxs"].to_string()).unwrap();
             result.push(Course {

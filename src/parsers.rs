@@ -5,6 +5,7 @@ mod timetable;
 mod user_profile;
 
 pub use classes::{parse_class_list_page, parse_major_list_page, Class, Major};
+use reqwest::Error as ReError;
 pub use score::{calculate_gpa, parse_score_list_page, Score};
 pub use select_course::{parse_available_course_page, SelectCourse};
 pub use timetable::{parse_timetable_page, Course};
@@ -49,19 +50,36 @@ impl Semester {
         };
     }
 
-    fn from_raw(raw: &str) -> anyhow::Result<Semester> {
+    fn from_raw(raw: &str) -> Result<Semester, ParserError> {
         return match raw {
             "" => Ok(Semester::All),
             "3" => Ok(Semester::FirstTerm),
             "12" => Ok(Semester::SecondTerm),
             "16" => Ok(Semester::MidTerm),
-            _ => Err(anyhow::anyhow!("Invalid semester valid given.")),
+            _ => Err(ParserError::SemesterError),
         };
     }
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParserError {
-    #[error("Missing field {} when parsing {}.", 0, 1)]
-    MissingField(String, String),
+    #[error("Profile element is wrong!!")]
+    MissingField,
+    #[error("Invalid semester valid given.")]
+    SemesterError,
+    #[error("Other Error {}", 0)]
+    Other(Box<dyn std::error::Error + Send + Sync>),
 }
+
+#[macro_export]
+macro_rules! convert_inner_errors {
+    ($src_err_type: ident) => {
+        impl From<$src_err_type> for ParserError {
+            fn from(sub_err: $src_err_type) -> Self {
+                return Self::Other(Box::from(sub_err));
+            }
+        }
+    };
+}
+
+convert_inner_errors!(ReError);

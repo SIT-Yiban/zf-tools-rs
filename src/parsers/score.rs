@@ -1,7 +1,6 @@
 use crate::parsers::Semester;
 use crate::Result;
 use serde_json::Value;
-use std::str::FromStr;
 
 #[derive(Clone)]
 pub struct Score {
@@ -23,26 +22,28 @@ pub struct Score {
 
 pub fn parse_score_list_page(page: &str) -> Result<Vec<Score>> {
     let json_page: Value = serde_json::from_str(page)?;
-    let course_list = json_page["items"].clone();
-    if let Some(course) = course_list.as_array() {
-        let mut result = Vec::new();
-        for each_course in course {
-            let scores = f32::from_str(&*each_course["cj"].to_string()).unwrap_or(0.0);
-            let sem = Semester::from_raw(&*each_course["xqm"].to_string()).unwrap();
-            let credits = f32::from_str(&*each_course["xf"].to_string()).unwrap_or(0.0);
-            result.push(Score {
-                score: scores,
-                course: each_course["kcmc"].as_str().unwrap_or("空").to_string(),
-                course_id: each_course["kch"].as_str().unwrap_or("空").to_string(),
-                class_id: each_course["jxb_id"].as_str().unwrap_or("空").to_string(),
-                school_year: each_course["xnmmc"].as_str().unwrap_or("空").to_string(),
-                semester: sem,
-                credit: credits,
+
+    let get_str = |x: Option<&Value>| -> String { x.map(ToString::to_string).unwrap_or_default() };
+    let get_f32 = |x: Option<&Value>| -> f32 { get_str(x).parse().unwrap() };
+
+    let result = json_page["items"].as_array().map(|course_list| {
+        course_list
+            .into_iter()
+            .map(|course| Score {
+                score: get_f32(course.get("cj")),
+                course: get_str(course.get("kcmc")),
+                course_id: get_str(course.get("kch")),
+                class_id: get_str(course.get("jxb_id")),
+                school_year: get_str(course.get("xnmmc")),
+                semester: Semester::from_raw(get_str(course.get("xqm")).as_str()).unwrap(),
+                credit: get_f32(course.get("xf")),
             })
-        }
-        return Ok(result);
+            .collect()
+    });
+    match result {
+        Some(v) => Ok(v),
+        None => Ok(vec![]),
     }
-    Ok(vec![])
 }
 
 pub fn calculate_gpa(scores: Vec<Score>) -> f32 {

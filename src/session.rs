@@ -1,4 +1,5 @@
-use crate::client::OwnClient;
+use crate::client::ZfClient;
+use crate::error::{Result, ZfError};
 use crate::global_config::*;
 use base64::{decode, encode};
 use rand::rngs::OsRng;
@@ -218,7 +219,7 @@ impl Session {
     }
 
     // Login function
-    pub async fn login(&mut self) -> anyhow::Result<OwnClient> {
+    pub async fn login(&mut self) -> Result<ZfClient> {
         // Get login page for the first cookie
         self.cookies.clear();
 
@@ -249,15 +250,15 @@ impl Session {
                 let text = &final_response.text().await?;
 
                 let error = Self::parse_err_message(&text);
-                Err(anyhow::anyhow!("Session error : {:?}.", error))
+                Err(ZfError::SessionError(error).into())
             } else {
                 self.login_flag = true;
-                Ok(OwnClient {
+                Ok(ZfClient {
                     user: self.user.clone(),
                     session: self.clone(),
                 })
             };
         }
-        Err(anyhow::anyhow!("Can't get public key"))
+        Err(ZfError::PublicKeyError.into())
     }
 }
