@@ -1,8 +1,8 @@
+use crate::parsers::{get_f32, get_str};
 use crate::Result;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use crate::parsers::{get_str, get_f32};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Course {
@@ -113,7 +113,6 @@ pub fn parse_timetable_page(page: &str) -> Result<Vec<Course>> {
     if let Some(course) = course_list.as_array() {
         let mut result = Vec::new();
         for each_course in course {
-
             result.push(Course {
                 course_name: get_str(each_course.get("kcmc")),
                 day: trans_week(get_str(each_course.get("xqjmc")).as_str()),

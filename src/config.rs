@@ -18,8 +18,7 @@ pub(crate) mod url {
         "/jwglxt/cjcx/cjcx_cxDgXscj.html?doType=query&gnmkdm=N305005"
     );
     /// Time tanle page
-    pub const TIME_TABLE: &str =
-        concatcp!(HOME, "/jwglxt/kbcx/xskbcx_cxXsKb.html?gnmkdm=N253508");
+    pub const TIME_TABLE: &str = concatcp!(HOME, "/jwglxt/kbcx/xskbcx_cxXsKb.html?gnmkdm=N253508");
     /// Personal profile page
     pub const PROFILE: &str = concatcp!(
         HOME,

@@ -1,6 +1,6 @@
 use crate::client::ZfClient;
-use crate::error::{Result, ZfError};
 use crate::config::*;
+use crate::error::{Result, ZfError};
 use base64::{decode, encode};
 use rand::rngs::OsRng;
 use regex::Regex;
@@ -208,14 +208,15 @@ impl Session {
     fn parse_err_message(content: &str) -> String {
         use scraper::{Html, Selector};
         let document = Html::parse_document(content);
-        let err_node = document
+        let err_node: String = document
             .select(
                 &Selector::parse("div#home.tab-pane.in.active p#tips.bg_danger.sl_danger").unwrap(),
             )
             .next()
             .unwrap()
-            .inner_html();
-        err_node
+            .text()
+            .collect();
+        err_node.trim().to_string()
     }
 
     // Login function

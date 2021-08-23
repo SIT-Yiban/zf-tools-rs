@@ -1,23 +1,22 @@
 mod classes;
+mod profile;
 mod score;
 mod select_course;
 mod timetable;
-mod profile;
 
 pub use classes::{parse_class_list_page, parse_major_list_page};
+pub use profile::parse_profile_page;
 pub use score::{calculate_gpa, parse_score_list_page};
-pub use select_course::{parse_available_course_page};
-pub use timetable::{parse_timetable_page};
-pub use profile::{parse_profile_page};
+pub use select_course::parse_available_course_page;
+pub use timetable::parse_timetable_page;
 
 pub use classes::{Class, Major};
+pub use profile::Profile;
 pub use score::Score;
 pub use select_course::SelectCourse;
 pub use timetable::Course;
-pub use profile::Profile;
 
 use serde_json::Value;
-
 
 #[derive(Clone)]
 pub enum SchoolYear {

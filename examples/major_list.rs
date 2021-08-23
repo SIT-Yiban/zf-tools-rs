@@ -1,4 +1,4 @@
-use zf_tools_rs::client::{Environment};
+use zf_tools_rs::client::Environment;
 use zf_tools_rs::parsers::SchoolYear;
 use zf_tools_rs::session::SessionBuilder;
 

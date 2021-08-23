@@ -1,4 +1,4 @@
-use crate::parsers::{Semester, get_f32, get_str};
+use crate::parsers::{get_f32, get_str, Semester};
 use crate::Result;
 use serde_json::Value;
 

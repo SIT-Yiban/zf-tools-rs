@@ -4,16 +4,11 @@ use zf_tools_rs::session::SessionBuilder;
 
 #[tokio::main]
 async fn main() {
-    let mut session = SessionBuilder::new()
-        .user("user")
-        .passwd("passwd")
-        .build();
+    let mut session = SessionBuilder::new().user("user").passwd("passwd").build();
     let x = session.login().await;
     match x {
         Ok(mut y) => {
-            let profile = y
-                .get_profile()
-                .await;
+            let profile = y.get_profile().await;
             println!("{:?}", profile);
         }
         _ => {
