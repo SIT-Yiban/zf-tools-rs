@@ -1,5 +1,5 @@
 use crate::client::ZfClient;
-use crate::global_config::url::{CLASS_LIST, MAJOR_LIST, SUGGESTED_COURSE};
+use crate::config::url::{CLASS_LIST, MAJOR_LIST, SUGGESTED_COURSE};
 use crate::parsers::*;
 use crate::Result;
 use async_trait::async_trait;
@@ -30,7 +30,7 @@ impl Environment for ZfClient {
         let param = [("njdm_id", entrance_year.to_string())];
         let page = self.get_url(MAJOR_LIST, &param).await?;
         let text = page.text().await?;
-        parse_major_list_page(&*text)
+        parse_major_list_page(&text)
     }
 
     async fn get_class_list(
@@ -45,7 +45,7 @@ impl Environment for ZfClient {
         ];
         let page = self.post_url(CLASS_LIST, &data).await?;
         let text = page.text().await?;
-        parse_class_list_page(&*text)
+        parse_class_list_page(&text)
     }
 
     async fn get_suggested_course_list(
@@ -85,6 +85,6 @@ impl Environment for ZfClient {
         ];
         let page = self.post_url(SUGGESTED_COURSE, &data).await?;
         let text = page.text().await?;
-        parse_timetable_page(&*text)
+        parse_timetable_page(&text)
     }
 }

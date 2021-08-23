@@ -2,26 +2,27 @@ mod classes;
 mod score;
 mod select_course;
 mod timetable;
-mod user_profile;
+mod profile;
 
-pub use classes::{parse_class_list_page, parse_major_list_page, Class, Major};
-use reqwest::Error as ReError;
-pub use score::{calculate_gpa, parse_score_list_page, Score};
-pub use select_course::{parse_available_course_page, SelectCourse};
-pub use timetable::{parse_timetable_page, Course};
-pub use user_profile::{parse_profile_page, Profile};
+pub use classes::{parse_class_list_page, parse_major_list_page};
+pub use score::{calculate_gpa, parse_score_list_page};
+pub use select_course::{parse_available_course_page};
+pub use timetable::{parse_timetable_page};
+pub use profile::{parse_profile_page};
+
+pub use classes::{Class, Major};
+pub use score::Score;
+pub use select_course::SelectCourse;
+pub use timetable::Course;
+pub use profile::Profile;
+
 use serde_json::Value;
+
 
 #[derive(Clone)]
 pub enum SchoolYear {
     AllYear,
     SomeYear(i32),
-}
-
-impl SchoolYear {
-    fn new(year: i32) -> Self {
-        Self::SomeYear(year)
-    }
 }
 
 impl ToString for SchoolYear {
@@ -43,22 +44,22 @@ pub enum Semester {
 
 impl Semester {
     pub(crate) fn to_raw(&self) -> &str {
-        return match self {
+        match self {
             Semester::All => "",
             Semester::FirstTerm => "3",
             Semester::SecondTerm => "12",
             Semester::MidTerm => "16",
-        };
+        }
     }
 
     fn from_raw(raw: &str) -> Result<Semester, ParserError> {
-        return match raw {
+        match raw {
             "" => Ok(Semester::All),
             "3" => Ok(Semester::FirstTerm),
             "12" => Ok(Semester::SecondTerm),
             "16" => Ok(Semester::MidTerm),
             _ => Err(ParserError::SemesterError),
-        };
+        }
     }
 }
 
@@ -76,19 +77,4 @@ pub enum ParserError {
     MissingField,
     #[error("Invalid semester valid given.")]
     SemesterError,
-    #[error("Other Error {}", 0)]
-    Other(Box<dyn std::error::Error + Send + Sync>),
 }
-
-#[macro_export]
-macro_rules! convert_inner_errors {
-    ($src_err_type: ident) => {
-        impl From<$src_err_type> for ParserError {
-            fn from(sub_err: $src_err_type) -> Self {
-                return Self::Other(Box::from(sub_err));
-            }
-        }
-    };
-}
-
-convert_inner_errors!(ReError);

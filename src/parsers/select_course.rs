@@ -34,8 +34,7 @@ pub fn parse_available_course_page(page: &str) -> Result<Vec<SelectCourse>> {
         let result = major_list
             .iter()
             .map(|v| {
-                let x = serde_json::from_value::<SelectCourse>(v.clone()).unwrap();
-                x
+                serde_json::from_value::<SelectCourse>(v.clone()).unwrap()
             })
             .collect();
         return Ok(result);

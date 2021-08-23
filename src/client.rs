@@ -1,7 +1,7 @@
 mod environment;
 mod user;
 
-use crate::global_config::USERAGENT;
+use crate::config::USERAGENT;
 use crate::session::Session;
 use crate::Result;
 pub use environment::Environment;

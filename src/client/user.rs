@@ -1,6 +1,6 @@
 use crate::client::ZfClient;
-use crate::global_config::url::{PROFILE, SCORE_LIST, TIME_TABLE};
-use crate::global_config::USERAGENT;
+use crate::config::url::{PROFILE, SCORE_LIST, TIME_TABLE};
+use crate::config::USERAGENT;
 use crate::parsers::*;
 use crate::Result;
 use async_trait::async_trait;
@@ -49,7 +49,7 @@ impl User for ZfClient {
             .await?;
         self.session.sync_cookies("jwxt.sit.edu.cn", page.cookies());
         let text = page.text().await?;
-        return parse_profile_page(&*text);
+        parse_profile_page(&text)
     }
 
     async fn get_timetable(
@@ -63,7 +63,7 @@ impl User for ZfClient {
         ];
         let page = self.post_url(TIME_TABLE, &data).await?;
         let text = page.text().await?;
-        return parse_timetable_page(&*text);
+        parse_timetable_page(&text)
     }
 
     fn group_timetable(course_list: Vec<Course>) -> HashMap<String, Vec<Course>> {
@@ -102,7 +102,7 @@ impl User for ZfClient {
         ];
         let page = self.post_url(SCORE_LIST, &data).await?;
         let text = page.text().await?;
-        return parse_score_list_page(&*text);
+        parse_score_list_page(&text)
     }
 
     fn calculate_gpa(score_list: Vec<Score>) -> Result<f32> {

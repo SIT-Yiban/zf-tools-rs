@@ -58,7 +58,7 @@ pub fn expand_weeks_str(week_string: &str) -> Vec<String> {
     let mut weeks = Vec::new();
     let re = Regex::new(r"(\d{1,2})(:?-(\d{1,2}))?").unwrap();
     week_string.split(',').for_each(|week_string| {
-        if week_string.contains("-") {
+        if week_string.contains('-') {
             let mut step = 1;
             if week_string.ends_with("(单)") || week_string.ends_with("(双)") {
                 step = 2;
@@ -88,7 +88,7 @@ pub fn expand_time_index(time_string: &str) -> Vec<String> {
     let transform_number = |x: i32| -> String { x.to_string() };
 
     let mut indices = Vec::new();
-    if time_string.contains("-") {
+    if time_string.contains('-') {
         if let Some((min, max)) = time_string.split_once('-') {
             let (range_left, range_right) = (check_time_index(min), check_time_index(max));
             let ranges = range_left..(range_right + 1);
@@ -103,7 +103,7 @@ pub fn expand_time_index(time_string: &str) -> Vec<String> {
 }
 
 fn split_string(s: String) -> Vec<String> {
-    let result: Vec<String> = s.split(",").map(ToString::to_string).collect();
+    let result: Vec<String> = s.split(',').map(ToString::to_string).collect();
     result
 }
 

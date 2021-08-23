@@ -1,6 +1,6 @@
 use crate::client::ZfClient;
 use crate::error::{Result, ZfError};
-use crate::global_config::*;
+use crate::config::*;
 use base64::{decode, encode};
 use rand::rngs::OsRng;
 use regex::Regex;
@@ -241,14 +241,14 @@ impl Session {
                 ("csrftoken", token.as_str()),
                 ("language", "zh_CN"),
                 ("yhm", &self.user.clone()),
-                ("mm", &encrypted_passwd.as_str()),
+                ("mm", &encrypted_passwd),
             ];
 
             let final_response = self.post_with_auto_redirect(url::LOGIN, params).await?;
             return if final_response.url().to_string().starts_with(url::LOGIN) {
-                let text = &final_response.text().await?;
-
+                let text = final_response.text().await?;
                 let error = Self::parse_err_message(&text);
+
                 Err(ZfError::SessionError(error).into())
             } else {
                 self.login_flag = true;

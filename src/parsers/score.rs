@@ -25,7 +25,7 @@ pub fn parse_score_list_page(page: &str) -> Result<Vec<Score>> {
 
     let result = json_page["items"].as_array().map(|course_list| {
         course_list
-            .into_iter()
+            .iter()
             .map(|course| Score {
                 score: get_f32(course.get("cj")),
                 course: get_str(course.get("kcmc")),
@@ -50,6 +50,5 @@ pub fn calculate_gpa(scores: Vec<Score>) -> f32 {
         t += s.credit * s.score;
         total_credits += s.credit;
     }
-    let result = (t / total_credits / 10.0) - 5.0;
-    return result;
+    (t / total_credits / 10.0) - 5.0
 }

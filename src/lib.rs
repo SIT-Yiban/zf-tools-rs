@@ -1,4 +1,4 @@
-pub mod global_config;
+pub mod config;
 
 pub mod client;
 pub mod error;

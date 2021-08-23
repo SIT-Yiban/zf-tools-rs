@@ -54,7 +54,7 @@ pub fn parse_profile_page(text: &str) -> Result<Profile> {
             .select(&selectors)
             .next()
             .map(|x| x.inner_html().trim().to_string())
-            .ok_or_else(|| ParserError::MissingField)?;
+            .ok_or(ParserError::MissingField)?;
         values.push(value);
     }
     // It can be true that element.len() == ELEMENTS.len().
