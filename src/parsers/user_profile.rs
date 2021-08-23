@@ -53,7 +53,7 @@ pub fn parse_profile_page(text: &str) -> Result<Profile> {
         let value = pages
             .select(&selectors)
             .next()
-            .map(|x| x.inner_html())
+            .map(|x| x.inner_html().trim().to_string())
             .ok_or_else(|| ParserError::MissingField)?;
         values.push(value);
     }

@@ -2,7 +2,7 @@ use crate::Result;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::str::FromStr;
+use crate::parsers::{get_str, get_f32};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Course {
@@ -91,7 +91,7 @@ pub fn expand_time_index(time_string: &str) -> Vec<String> {
     if time_string.contains("-") {
         if let Some((min, max)) = time_string.split_once('-') {
             let (range_left, range_right) = (check_time_index(min), check_time_index(max));
-            let ranges = (range_left..(range_right + 1));
+            let ranges = range_left..(range_right + 1);
             for range in ranges {
                 indices.push(transform_number(range));
             }
@@ -113,24 +113,20 @@ pub fn parse_timetable_page(page: &str) -> Result<Vec<Course>> {
     if let Some(course) = course_list.as_array() {
         let mut result = Vec::new();
         for each_course in course {
-            let teachers = split_string(each_course["xm"].to_string());
-            let class = split_string(each_course["jxbzc"].to_string());
 
-            let credits = f32::from_str(&*each_course["xf"].to_string()).unwrap();
-            let hour = f32::from_str(&*each_course["zxs"].to_string()).unwrap();
             result.push(Course {
-                course_name: each_course["kcmc"].to_string(),
-                day: trans_week(&*each_course["xqjmc"].to_string()),
-                time_index: expand_time_index(&*each_course["jcs"].to_string()),
-                weeks: expand_weeks_str(&*each_course["zcd"].to_string()),
-                place: each_course["cdmc"].to_string(),
-                teacher: teachers,
-                campus: each_course["xqmc"].to_string(),
-                credit: credits,
-                hours: hour,
-                dyn_class_id: each_course["jxbmc"].to_string(),
-                course_id: each_course["kch"].to_string(),
-                prefered_class: class,
+                course_name: get_str(each_course.get("kcmc")),
+                day: trans_week(get_str(each_course.get("xqjmc")).as_str()),
+                time_index: expand_time_index(get_str(each_course.get("jcs")).as_str()),
+                weeks: expand_weeks_str(get_str(each_course.get("zcd")).as_str()),
+                place: get_str(each_course.get("cdmc")),
+                teacher: split_string(get_str(each_course.get("xm"))),
+                campus: get_str(each_course.get("xqmc")),
+                credit: get_f32(each_course.get("xf")),
+                hours: get_f32(each_course.get("zxs")),
+                dyn_class_id: get_str(each_course.get("jxbmc")),
+                course_id: get_str(each_course.get("kch")),
+                prefered_class: split_string(get_str(each_course.get("jxbzc"))),
             })
         }
         return Ok(result);

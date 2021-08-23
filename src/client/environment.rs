@@ -6,16 +6,16 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait Environment {
-    async fn get_major_list(&self, entrance_year: SchoolYear) -> Result<Vec<Major>>;
+    async fn get_major_list(&mut self, entrance_year: SchoolYear) -> Result<Vec<Major>>;
 
     async fn get_class_list(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
     ) -> Result<Vec<Class>>;
 
     async fn get_suggested_course_list(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
         major_id: &str,
@@ -26,7 +26,7 @@ pub trait Environment {
 
 #[async_trait]
 impl Environment for ZfClient {
-    async fn get_major_list(&self, entrance_year: SchoolYear) -> Result<Vec<Major>> {
+    async fn get_major_list(&mut self, entrance_year: SchoolYear) -> Result<Vec<Major>> {
         let param = [("njdm_id", entrance_year.to_string())];
         let page = self.get_url(MAJOR_LIST, &param).await?;
         let text = page.text().await?;
@@ -34,7 +34,7 @@ impl Environment for ZfClient {
     }
 
     async fn get_class_list(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
     ) -> Result<Vec<Class>> {
@@ -49,7 +49,7 @@ impl Environment for ZfClient {
     }
 
     async fn get_suggested_course_list(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
         major_id: &str,

@@ -10,6 +10,7 @@ pub use score::{calculate_gpa, parse_score_list_page, Score};
 pub use select_course::{parse_available_course_page, SelectCourse};
 pub use timetable::{parse_timetable_page, Course};
 pub use user_profile::{parse_profile_page, Profile};
+use serde_json::Value;
 
 #[derive(Clone)]
 pub enum SchoolYear {
@@ -32,7 +33,7 @@ impl ToString for SchoolYear {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Semester {
     All = 0,
     FirstTerm = 1,
@@ -59,6 +60,14 @@ impl Semester {
             _ => Err(ParserError::SemesterError),
         };
     }
+}
+
+pub fn get_str(x: Option<&Value>) -> String {
+    String::from(x.map(|m| m.as_str().unwrap()).unwrap_or_default())
+}
+
+pub fn get_f32(x: Option<&Value>) -> f32 {
+    get_str(x).parse().unwrap()
 }
 
 #[derive(Debug, thiserror::Error)]

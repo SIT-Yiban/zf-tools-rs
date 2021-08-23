@@ -245,7 +245,6 @@ impl Session {
             ];
 
             let final_response = self.post_with_auto_redirect(url::LOGIN, params).await?;
-
             return if final_response.url().to_string().starts_with(url::LOGIN) {
                 let text = &final_response.text().await?;
 

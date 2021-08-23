@@ -9,10 +9,10 @@ use std::collections::HashMap;
 
 #[async_trait]
 pub trait User {
-    async fn get_profile(&self) -> Result<Profile>;
+    async fn get_profile(&mut self) -> Result<Profile>;
 
     async fn get_timetable(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
     ) -> Result<Vec<Course>>;
@@ -20,25 +20,25 @@ pub trait User {
     fn group_timetable(course_list: Vec<Course>) -> HashMap<String, Vec<Course>>;
 
     async fn get_group_timetable(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
     ) -> Result<HashMap<String, Vec<Course>>>;
 
     async fn get_score_list(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
     ) -> Result<Vec<Score>>;
 
     fn calculate_gpa(score_list: Vec<Score>) -> Result<f32>;
 
-    async fn get_gpa(&self, school_year: SchoolYear, semester: Semester) -> Result<f32>;
+    async fn get_gpa(&mut self, school_year: SchoolYear, semester: Semester) -> Result<f32>;
 }
 
 #[async_trait]
 impl User for ZfClient {
-    async fn get_profile(&self) -> Result<Profile> {
+    async fn get_profile(&mut self) -> Result<Profile> {
         let page = self
             .session
             .client
@@ -47,12 +47,13 @@ impl User for ZfClient {
             .header(COOKIE, self.session.get_cookie_string("jwxt.sit.edu.cn"))
             .send()
             .await?;
+        self.session.sync_cookies("jwxt.sit.edu.cn", page.cookies());
         let text = page.text().await?;
         return parse_profile_page(&*text);
     }
 
     async fn get_timetable(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
     ) -> Result<Vec<Course>> {
@@ -81,7 +82,7 @@ impl User for ZfClient {
     }
 
     async fn get_group_timetable(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
     ) -> Result<HashMap<String, Vec<Course>>> {
@@ -90,7 +91,7 @@ impl User for ZfClient {
     }
 
     async fn get_score_list(
-        &self,
+        &mut self,
         school_year: SchoolYear,
         semester: Semester,
     ) -> Result<Vec<Score>> {
@@ -108,7 +109,7 @@ impl User for ZfClient {
         Ok(calculate_gpa(score_list))
     }
 
-    async fn get_gpa(&self, school_year: SchoolYear, semester: Semester) -> Result<f32> {
+    async fn get_gpa(&mut self, school_year: SchoolYear, semester: Semester) -> Result<f32> {
         let score_list = self.get_score_list(school_year, semester).await?;
         return ZfClient::calculate_gpa(score_list);
     }

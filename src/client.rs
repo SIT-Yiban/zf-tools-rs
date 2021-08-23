@@ -4,8 +4,10 @@ mod user;
 use crate::global_config::USERAGENT;
 use crate::session::Session;
 use crate::Result;
+pub use environment::Environment;
 use reqwest::header::{COOKIE, USER_AGENT};
 use reqwest::Response;
+pub use user::User;
 
 #[derive(Debug)]
 pub struct ZfClient {
@@ -14,7 +16,7 @@ pub struct ZfClient {
 }
 
 impl ZfClient {
-    async fn get_url(&self, url: &str, data: &[(&str, String)]) -> Result<Response> {
+    async fn get_url(&mut self, url: &str, data: &[(&str, String)]) -> Result<Response> {
         let response = self
             .session
             .client
@@ -24,10 +26,12 @@ impl ZfClient {
             .header(COOKIE, self.session.get_cookie_string("jwxt.sit.edu.cn"))
             .send()
             .await?;
+        self.session
+            .sync_cookies("jwxt.sit.edu.cn", response.cookies());
         Ok(response)
     }
 
-    async fn post_url(&self, url: &str, data: &[(&str, String)]) -> Result<Response> {
+    async fn post_url(&mut self, url: &str, data: &[(&str, String)]) -> Result<Response> {
         let response = self
             .session
             .client
@@ -37,6 +41,8 @@ impl ZfClient {
             .header(COOKIE, self.session.get_cookie_string("jwxt.sit.edu.cn"))
             .send()
             .await?;
+        self.session
+            .sync_cookies("jwxt.sit.edu.cn", response.cookies());
         Ok(response)
     }
 }

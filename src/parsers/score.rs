@@ -1,8 +1,8 @@
-use crate::parsers::Semester;
+use crate::parsers::{Semester, get_f32, get_str};
 use crate::Result;
 use serde_json::Value;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Score {
     /// 成绩
     score: f32,
@@ -23,9 +23,6 @@ pub struct Score {
 pub fn parse_score_list_page(page: &str) -> Result<Vec<Score>> {
     let json_page: Value = serde_json::from_str(page)?;
 
-    let get_str = |x: Option<&Value>| -> String { x.map(ToString::to_string).unwrap_or_default() };
-    let get_f32 = |x: Option<&Value>| -> f32 { get_str(x).parse().unwrap() };
-
     let result = json_page["items"].as_array().map(|course_list| {
         course_list
             .into_iter()
@@ -35,7 +32,7 @@ pub fn parse_score_list_page(page: &str) -> Result<Vec<Score>> {
                 course_id: get_str(course.get("kch")),
                 class_id: get_str(course.get("jxb_id")),
                 school_year: get_str(course.get("xnmmc")),
-                semester: Semester::from_raw(get_str(course.get("xqm")).as_str()).unwrap(),
+                semester: Semester::from_raw(&get_str(course.get("xqm"))).unwrap(),
                 credit: get_f32(course.get("xf")),
             })
             .collect()
