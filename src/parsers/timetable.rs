@@ -4,6 +4,10 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+lazy_static::lazy_static! {
+    static ref WEEK_REGEX: Regex = Regex::new(r"(\d{1,2})(:?-(\d{1,2}))?").unwrap();
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Course {
     /// 课程名称
@@ -56,14 +60,13 @@ pub fn expand_weeks_str(week_string: &str) -> Vec<String> {
     let transform_number = |x: i32| -> String { x.to_string() };
 
     let mut weeks = Vec::new();
-    let re = Regex::new(r"(\d{1,2})(:?-(\d{1,2}))?").unwrap();
     week_string.split(',').for_each(|week_string| {
         if week_string.contains('-') {
             let mut step = 1;
             if week_string.ends_with("(单)") || week_string.ends_with("(双)") {
                 step = 2;
             }
-            let range = re.captures(week_string).unwrap();
+            let range = WEEK_REGEX.captures(week_string).unwrap();
             let mut min = check_time_index(range.get(1).unwrap().as_str());
             let max = check_time_index(range.get(3).unwrap().as_str());
             while min < max + 1 {
